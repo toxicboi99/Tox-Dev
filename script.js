@@ -442,87 +442,239 @@ if (document.readyState === "loading") {
   setupScrollAnimations();
 }
 
-/* ========== Services → Contact + hidden field ========== */
+/* ========== Services -> Dynamic contact form ========== */
 
-const serviceField = document.getElementById("serviceInquiry");
+const CONTACT_SERVICES = {
+  "web-development": {
+    label: "Web Development",
+    subServices: [
+      "Frontend Development",
+      "Backend Development",
+      "Full Stack Development",
+      "E-commerce Development",
+      "Business Website",
+      "Custom Web Application",
+    ],
+  },
+  "ui-ux-design": {
+    label: "UI/UX Design",
+    subServices: [
+      "UI Design",
+      "UX Research",
+      "Wireframing and Prototyping",
+      "Design System",
+      "Mobile App Design",
+      "Landing Page Design",
+    ],
+  },
+  seo: {
+    label: "SEO",
+    subServices: [
+      "Technical SEO",
+      "On-Page SEO",
+      "Local SEO",
+      "SEO Audit",
+      "Content Strategy",
+      "Performance Optimization",
+    ],
+  },
+  automation: {
+    label: "Automation",
+    subServices: [
+      "Workflow Automation",
+      "CRM Automation",
+      "Email Automation",
+      "Lead Capture Automation",
+      "Reporting Automation",
+      "AI Process Automation",
+    ],
+  },
+  "api-development": {
+    label: "API Development",
+    subServices: [
+      "REST API Development",
+      "Third-Party Integration",
+      "Payment Gateway Integration",
+      "Authentication and Security",
+      "Microservices API",
+      "API Documentation",
+    ],
+  },
+};
 
 const projectRefField = document.getElementById("projectRef");
+const serviceCards = document.querySelectorAll(".service-card[data-service-key]");
+const elService = document.getElementById("contactService");
+const elSubService = document.getElementById("contactSubService");
+const summaryService = document.getElementById("summaryService");
+const summarySubService = document.getElementById("summarySubService");
 
-document.querySelectorAll(".service-card[data-service]").forEach((btn) => {
+function setSummaryChip(el, text, isEmpty) {
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("is-empty", Boolean(isEmpty));
+}
+
+function populateSubServiceOptions(serviceKey, selectedValue = "") {
+  if (!elSubService) return;
+
+  const config = CONTACT_SERVICES[serviceKey];
+  elSubService.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = config ? "Select a sub-service" : "Select a service first";
+  elSubService.appendChild(placeholder);
+
+  if (!config) {
+    elSubService.disabled = true;
+    elSubService.value = "";
+    return;
+  }
+
+  config.subServices.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item;
+    option.textContent = item;
+    elSubService.appendChild(option);
+  });
+
+  elSubService.disabled = false;
+  elSubService.value = config.subServices.includes(selectedValue) ? selectedValue : "";
+}
+
+function updateSelectionSummary() {
+  const serviceConfig = elService ? CONTACT_SERVICES[elService.value] : null;
+  setSummaryChip(summaryService, serviceConfig ? serviceConfig.label : "Service not selected", !serviceConfig);
+  setSummaryChip(
+    summarySubService,
+    elSubService && elSubService.value ? elSubService.value : "Sub-service pending",
+    !(elSubService && elSubService.value)
+  );
+}
+
+function syncActiveServiceCard() {
+  if (!serviceCards.length || !elService) return;
+  serviceCards.forEach((card) => {
+    const isActive = card.getAttribute("data-service-key") === elService.value;
+    card.classList.toggle("is-active", isActive);
+  });
+}
+
+function applyServiceSelection(serviceKey, options = {}) {
+  const { scrollToForm = true } = options;
+  if (!elService || !CONTACT_SERVICES[serviceKey]) return;
+
+  elService.value = serviceKey;
+  populateSubServiceOptions(serviceKey);
+  updateSelectionSummary();
+  syncActiveServiceCard();
+
+  if (projectRefField) projectRefField.value = "";
+
+  const contact = document.getElementById("contact");
+  if (scrollToForm && contact) {
+    contact.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
+
+  if (elSubService) elSubService.focus({ preventScroll: true });
+}
+
+serviceCards.forEach((btn) => {
   btn.addEventListener("click", () => {
-    const name = btn.getAttribute("data-service") || "";
-    if (serviceField) serviceField.value = name;
-    if (projectRefField) projectRefField.value = "";
-    const contact = document.getElementById("contact");
-    if (contact) contact.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth" });
-    const first = document.getElementById("contactName");
-    if (first) first.focus({ preventScroll: true });
+    const serviceKey = btn.getAttribute("data-service-key") || "";
+    applyServiceSelection(serviceKey);
   });
 });
 
-/* ========== Portfolio — 20 flip cards ========== */
+if (elService) {
+  elService.addEventListener("change", () => {
+    populateSubServiceOptions(elService.value);
+    updateSelectionSummary();
+    syncActiveServiceCard();
+  });
+}
 
-/** Each project: unique image seed for picsum + display meta */
+if (elSubService) {
+  elSubService.addEventListener("change", updateSelectionSummary);
+}
+
+populateSubServiceOptions(elService ? elService.value : "");
+updateSelectionSummary();
+syncActiveServiceCard();
+
+/* ========== Portfolio -> image, name, live button ========== */
+
+/** Replace liveUrl values with your real deployed project links before launch. */
 const PORTFOLIO_ITEMS = [
-  { title: "Nebula Commerce", tag: "eCommerce", year: "2025", img: "https://picsum.photos/seed/tox-nebula/800/600" },
-  { title: "Pulse Analytics", tag: "Web App", year: "2025", img: "https://picsum.photos/seed/tox-pulse/800/600" },
-  { title: "Atlas Realty", tag: "Web Design", year: "2024", img: "https://picsum.photos/seed/tox-atlas/800/600" },
-  { title: "Vertex LMS", tag: "EdTech", year: "2024", img: "https://picsum.photos/seed/tox-vertex/800/600" },
-  { title: "Lumen Health", tag: "Healthcare", year: "2024", img: "https://picsum.photos/seed/tox-lumen/800/600" },
-  { title: "Kite Mobile", tag: "Marketing", year: "2024", img: "https://picsum.photos/seed/tox-kite/800/600" },
-  { title: "Drift Audio", tag: "Brand", year: "2023", img: "https://picsum.photos/seed/tox-drift/800/600" },
-  { title: "Cipher Vault", tag: "Security", year: "2023", img: "https://picsum.photos/seed/tox-cipher/800/600" },
-  { title: "Harbor Logistics", tag: "B2B", year: "2023", img: "https://picsum.photos/seed/tox-harbor/800/600" },
-  { title: "Solstice Travel", tag: "Booking", year: "2023", img: "https://picsum.photos/seed/tox-solstice/800/600" },
-  { title: "Frame Studio", tag: "Portfolio", year: "2023", img: "https://picsum.photos/seed/tox-frame/800/600" },
-  { title: "Mint Payroll", tag: "SaaS", year: "2022", img: "https://picsum.photos/seed/tox-mint/800/600" },
-  { title: "Echo Podcast", tag: "Media", year: "2022", img: "https://picsum.photos/seed/tox-echo/800/600" },
-  { title: "Quartz Bank", tag: "Fintech", year: "2022", img: "https://picsum.photos/seed/tox-quartz/800/600" },
-  { title: "Northwind Energy", tag: "Corporate", year: "2022", img: "https://picsum.photos/seed/tox-north/800/600" },
-  { title: "Pixel Arcade", tag: "Games", year: "2022", img: "https://picsum.photos/seed/tox-pixel/800/600" },
-  { title: "Cedar Nonprofit", tag: "NGO", year: "2021", img: "https://picsum.photos/seed/tox-cedar/800/600" },
-  { title: "Ridge Outdoors", tag: "Retail", year: "2021", img: "https://picsum.photos/seed/tox-ridge/800/600" },
-  { title: "Velvet Fashion", tag: "Luxury", year: "2021", img: "https://picsum.photos/seed/tox-velvet/800/600" },
-  { title: "Orbit Launch", tag: "Startup", year: "2021", img: "https://picsum.photos/seed/tox-orbit/800/600" },
+  {
+    title: "English Speaking Practice App",
+    img: "/img/pro1.png",
+    liveUrl: "https://english-app-seven-beta.vercel.app/",
+  },
+  {
+    title: "Flourish Finance",
+    img: "/img/pro2.png",
+    liveUrl: "https://www.flourishfinance.com.au/",
+  },
+  {
+    title: "UEI Global",
+    img: "/img/pro3.png",
+    liveUrl: "https://www.uei-global.com/",
+  },
+  {
+    title: "QuickCart E-commerce",
+    img: "/img/pro4.png",
+    liveUrl: "https://qcart-team.vercel.app/",
+  },
+  {
+    title: "AI Virtual Assistant",
+    img: "/img/pro5.png",
+    liveUrl: "https://sarthi02.netlify.app/",
+  },
+  {
+    title: "Cake Hub Store E-commerce",
+    img: "/img/pro6.png",
+    liveUrl: "https://birgunjcakehub.free.nf/?i=1",
+  },
 ];
 
 function buildPortfolio() {
   const grid = document.getElementById("portfolioGrid");
   if (!grid) return;
 
+  grid.innerHTML = "";
+
   PORTFOLIO_ITEMS.forEach((item) => {
     const article = document.createElement("article");
     article.className = "project-card";
     article.innerHTML = `
-      <a href="#contact" class="project-card__link" data-project-title="${item.title}">
+      <a
+        href="${item.liveUrl}"
+        class="project-card__link"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View live project: ${item.title}"
+      >
         <div class="project-card__image-wrap">
-          <img src="${item.img}" alt="${item.title} — ${item.tag}, ${item.year}" width="800" height="600" loading="lazy" decoding="async" />
+          <img src="${item.img}" alt="${item.title} project preview" width="900" height="680" loading="lazy" decoding="async" />
           <div class="project-card__overlay" aria-hidden="true"></div>
-          <div class="project-card__content">
-            <span class="project-card__tag">${item.tag}</span>
+          <span class="project-card__badge">Live Build</span>
+        </div>
+        <div class="project-card__body">
+          <div class="project-card__meta">
             <h3 class="project-card__title">${item.title}</h3>
-            <span class="project-card__cta">
-              View project
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M5 12h14M13 6l6 6-6 6"/>
-              </svg>
-            </span>
           </div>
+          <span class="project-card__cta">
+            View project
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8"/>
+            </svg>
+          </span>
         </div>
       </a>
     `;
     grid.appendChild(article);
-  });
-
-  /** Prefill hidden project_ref + optional message line when “View project” is used */
-  grid.addEventListener("click", (e) => {
-    const a = e.target.closest("a.project-card__link[data-project-title]");
-    if (!a) return;
-    const title = a.getAttribute("data-project-title") || "";
-    const projectRef = document.getElementById("projectRef");
-    const serviceFieldEl = document.getElementById("serviceInquiry");
-    if (projectRef) projectRef.value = `Project interest: ${title}`;
-    if (serviceFieldEl) serviceFieldEl.value = "";
   });
 }
 buildPortfolio();
@@ -600,17 +752,35 @@ function buildTestimonialSlider() {
 }
 buildTestimonialSlider();
 
-/* ========== Contact form — validation + submit ========== */
+/* ========== Contact form -> validation + submit ========== */
 
 const form = document.getElementById("contactForm");
 const elName = document.getElementById("contactName");
 const elEmail = document.getElementById("contactEmail");
+const elPhone = document.getElementById("contactPhone");
+const elBudget = document.getElementById("contactBudget");
 const elMessage = document.getElementById("contactMessage");
+const errService = document.getElementById("errService");
+const errSubService = document.getElementById("errSubService");
 const errName = document.getElementById("errName");
 const errEmail = document.getElementById("errEmail");
+const errPhone = document.getElementById("errPhone");
+const errBudget = document.getElementById("errBudget");
 const errMessage = document.getElementById("errMessage");
 const submitBtn = document.getElementById("submitBtn");
 const toast = document.getElementById("formToast");
+
+function validateService() {
+  if (!elService || elService.value) return "";
+  return "Please select a service.";
+}
+
+function validateSubService() {
+  if (!elSubService) return "";
+  if (elSubService.disabled) return "Choose a service first.";
+  if (!elSubService.value) return "Please select a sub-service.";
+  return "";
+}
 
 function validateName() {
   const v = (elName.value || "").trim();
@@ -622,20 +792,33 @@ function validateName() {
 function validateEmail() {
   const v = (elEmail.value || "").trim();
   if (!v) return "Please enter your email.";
-  /** HTML5-like check + simple pattern */
   const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   if (!ok) return "Enter a valid email address.";
   return "";
 }
 
+function validatePhone() {
+  const v = (elPhone.value || "").trim();
+  if (!v) return "Please enter your phone number.";
+  const digits = v.replace(/\D/g, "");
+  if (digits.length < 7) return "Enter a valid phone number.";
+  return "";
+}
+
+function validateBudget() {
+  if (!elBudget || elBudget.value) return "";
+  return "Please select your budget range.";
+}
+
 function validateMessage() {
   const v = (elMessage.value || "").trim();
-  if (!v) return "Please enter a message.";
-  if (v.length < 10) return "Message should be at least 10 characters.";
+  if (!v) return "Please enter your project description.";
+  if (v.length < 20) return "Project description should be at least 20 characters.";
   return "";
 }
 
 function showFieldError(input, errEl, msg) {
+  if (!input || !errEl) return;
   if (msg) {
     input.classList.add("is-invalid");
     errEl.textContent = msg;
@@ -646,6 +829,12 @@ function showFieldError(input, errEl, msg) {
 }
 
 function wireRealtimeValidation() {
+  if (elService) {
+    elService.addEventListener("change", () => showFieldError(elService, errService, validateService()));
+  }
+  if (elSubService) {
+    elSubService.addEventListener("change", () => showFieldError(elSubService, errSubService, validateSubService()));
+  }
   if (elName) {
     elName.addEventListener("input", () => showFieldError(elName, errName, validateName()));
     elName.addEventListener("blur", () => showFieldError(elName, errName, validateName()));
@@ -654,6 +843,13 @@ function wireRealtimeValidation() {
     elEmail.addEventListener("input", () => showFieldError(elEmail, errEmail, validateEmail()));
     elEmail.addEventListener("blur", () => showFieldError(elEmail, errEmail, validateEmail()));
   }
+  if (elPhone) {
+    elPhone.addEventListener("input", () => showFieldError(elPhone, errPhone, validatePhone()));
+    elPhone.addEventListener("blur", () => showFieldError(elPhone, errPhone, validatePhone()));
+  }
+  if (elBudget) {
+    elBudget.addEventListener("change", () => showFieldError(elBudget, errBudget, validateBudget()));
+  }
   if (elMessage) {
     elMessage.addEventListener("input", () => showFieldError(elMessage, errMessage, validateMessage()));
     elMessage.addEventListener("blur", () => showFieldError(elMessage, errMessage, validateMessage()));
@@ -661,7 +857,6 @@ function wireRealtimeValidation() {
 }
 wireRealtimeValidation();
 
-/** EmailJS init once */
 let emailJsReady = false;
 function initEmailJs() {
   if (typeof emailjs === "undefined") return;
@@ -684,17 +879,38 @@ function showToast() {
   }, 5200);
 }
 
-async function sendThankYouEmail(name, email, message) {
+function buildConfirmationSummary(inquiry) {
+  return [
+    `Service: ${inquiry.serviceLabel}`,
+    `Sub-service: ${inquiry.subService}`,
+    `Phone: ${inquiry.phone}`,
+    `Budget: ${inquiry.budget}`,
+    inquiry.projectRef ? `Reference: ${inquiry.projectRef}` : null,
+    "",
+    `Project details: ${inquiry.message}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function sendThankYouEmail(inquiry) {
   if (!emailJsReady || typeof emailjs === "undefined") return;
   const { serviceId, thankYouTemplateId } = CONFIG.emailjs;
   if (serviceId.includes("YOUR_") || thankYouTemplateId.includes("YOUR_")) return;
 
   await emailjs.send(serviceId, thankYouTemplateId, {
-    to_name: name,
-    to_email: email,
-    reply_to: email,
-    message: message,
-    subject_line: "Thanks for reaching out — ToxDev",
+    to_name: inquiry.name,
+    to_email: inquiry.email,
+    reply_to: inquiry.email,
+    phone_number: inquiry.phone,
+    budget_range: inquiry.budget,
+    service_name: inquiry.serviceLabel,
+    sub_service_name: inquiry.subService,
+    project_reference: inquiry.projectRef,
+    project_summary: inquiry.message,
+    confirmation_message: `We received your ${inquiry.serviceLabel} request for ${inquiry.subService}. Our team will review it and reply shortly.`,
+    message: buildConfirmationSummary(inquiry),
+    subject_line: `Thanks for your ${inquiry.serviceLabel} inquiry - ToxDev`,
   });
 }
 
@@ -714,41 +930,74 @@ async function postToGoogleSheets(payload) {
   return { ok: true };
 }
 
+function resetDynamicFormState() {
+  populateSubServiceOptions("");
+  updateSelectionSummary();
+  syncActiveServiceCard();
+  showFieldError(elService, errService, "");
+  showFieldError(elSubService, errSubService, "");
+  showFieldError(elName, errName, "");
+  showFieldError(elEmail, errEmail, "");
+  showFieldError(elPhone, errPhone, "");
+  showFieldError(elBudget, errBudget, "");
+  showFieldError(elMessage, errMessage, "");
+  if (projectRefField) projectRefField.value = "";
+}
+
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const n = validateName();
-    const em = validateEmail();
-    const m = validateMessage();
-    showFieldError(elName, errName, n);
-    showFieldError(elEmail, errEmail, em);
-    showFieldError(elMessage, errMessage, m);
-    if (n || em || m) return;
+    const serviceError = validateService();
+    const subServiceError = validateSubService();
+    const nameError = validateName();
+    const emailError = validateEmail();
+    const phoneError = validatePhone();
+    const budgetError = validateBudget();
+    const messageError = validateMessage();
 
-    const name = elName.value.trim();
-    const email = elEmail.value.trim();
-    const message = elMessage.value.trim();
-    const serviceInquiry = serviceField ? serviceField.value : "";
+    showFieldError(elService, errService, serviceError);
+    showFieldError(elSubService, errSubService, subServiceError);
+    showFieldError(elName, errName, nameError);
+    showFieldError(elEmail, errEmail, emailError);
+    showFieldError(elPhone, errPhone, phoneError);
+    showFieldError(elBudget, errBudget, budgetError);
+    showFieldError(elMessage, errMessage, messageError);
+
+    if (serviceError || subServiceError || nameError || emailError || phoneError || budgetError || messageError) {
+      return;
+    }
+
+    const inquiry = {
+      name: elName.value.trim(),
+      email: elEmail.value.trim(),
+      phone: elPhone.value.trim(),
+      budget: elBudget.value,
+      message: elMessage.value.trim(),
+      serviceKey: elService.value,
+      serviceLabel: CONTACT_SERVICES[elService.value].label,
+      subService: elSubService.value,
+      projectRef: projectRefField ? projectRefField.value.trim() : "",
+    };
 
     submitBtn.classList.add("is-loading");
     submitBtn.disabled = true;
 
-    const projectRef = document.getElementById("projectRef");
-    const projectRefVal = projectRef ? projectRef.value.trim() : "";
-
     const payload = {
-      name,
-      email,
-      message,
-      service_inquiry: serviceInquiry,
-      project_ref: projectRefVal,
+      name: inquiry.name,
+      email: inquiry.email,
+      phone: inquiry.phone,
+      budget: inquiry.budget,
+      message: inquiry.message,
+      service_key: inquiry.serviceKey,
+      service_name: inquiry.serviceLabel,
+      sub_service: inquiry.subService,
+      project_ref: inquiry.projectRef,
       submitted_at: new Date().toISOString(),
       source: "ToxDev website",
     };
 
     try {
-      /** Run sheet + email in parallel; sheet may be skipped in dev */
       const tasks = [];
       tasks.push(
         postToGoogleSheets(payload).catch((err) => {
@@ -756,15 +1005,14 @@ if (form) {
         })
       );
       tasks.push(
-        sendThankYouEmail(name, email, message).catch((err) => {
+        sendThankYouEmail(inquiry).catch((err) => {
           console.error("EmailJS:", err);
         })
       );
       await Promise.all(tasks);
 
       form.reset();
-      if (serviceField) serviceField.value = "";
-      if (projectRef) projectRef.value = "";
+      resetDynamicFormState();
       showToast();
     } catch (err) {
       console.error(err);
